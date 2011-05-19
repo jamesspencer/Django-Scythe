@@ -1,0 +1,119 @@
+
+.django-scythe
+{
+  float: left;
+}
+
+.django-scythe .target
+{
+  -moz-box-shadow: inset 0 0 15px 15px rgba(65, 118, 144, 0.05);
+  -webkit-box-shadow: inset 0 0 15px 15px rgba(65, 118, 144, 0.05);
+  box-shadow: inset 0 0 15px 15px rgba(65, 118, 144, 0.05);
+  border: 1px solid rgba(65, 118, 144, 0.15);
+  color: #417690;
+  width: 150px;
+  height: 150px;
+  line-height: 150px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  margin-bottom: 15px;
+}
+.django-scythe .target:hover,
+.django-scythe .target.dropme,
+.django-scythe.loading .target
+{
+  -moz-box-shadow: inset 0 0 15px 15px rgba(255, 138, 34, 0.05);
+  -webkit-box-shadow: inset 0 0 15px 15px rgba(255, 138, 34, 0.05);
+  box-shadow: inset 0 0 15px 15px rgba(255, 138, 34, 0.05);
+  color: rgb(255, 138, 34);
+}
+.django-scythe .target:hover .click
+{
+  text-decoration: underline;
+}
+.django-scythe .target.dropme .drop
+{
+  display: inline;
+}
+
+.django-scythe .target .text
+{
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: normal;
+}
+
+.django-scythe .target .dims
+{
+  color: #d3d3d3;
+  display: block;
+}
+
+.django-scythe .target input
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 40px;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.django-scythe  .mini-crop
+{
+  overflow: hidden;
+  border: 1px dotted #999;
+  background-color: #d3d3d3;
+}
+
+.django-scythe .django-scythe-actions
+{
+  min-height: 15px;
+}
+.django-scythe .preview span,
+.django-scythe .preview span
+{
+  display: block;
+  float: left;
+  width: 50%;
+}
+.django-scythe .preview .reset
+{
+  float: right;
+}
+.django-scythe.previous-input .preview span
+{
+  width: 100%;
+}
+
+.django-scythe.no-input .preview,
+.django-scythe.loading  .preview,
+.django-scythe .target,
+.django-scythe .target.dropme .click,
+.django-scythe .target.dropme .or,
+.django-scythe .target.dropme .drag,
+.django-scythe .target:hover .or,
+.django-scythe .target:hover .drag,
+.django-scythe .target .drop,
+.django-scythe.loading .target span,
+.django-scythe.previous-input .crop
+{
+  display: none;
+}
+
+.django-scythe.no-input .target,
+.django-scythe.loading .target
+{
+  display: block;
+}
+
+.django-scythe.loading .target
+{
+  background: url("spinner.gif") scroll center center no-repeat;
+}
