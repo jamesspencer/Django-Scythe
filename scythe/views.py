@@ -9,7 +9,6 @@ import base64
 @csrf_exempt
 def bounce_image(request):
     postedimg = request.FILES.get('image', False)
-    print request.FILES
     if postedimg:
         fdata = postedimg.read(postedimg.size)
         b = base64.b64encode(fdata)
