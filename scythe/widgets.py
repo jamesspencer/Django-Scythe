@@ -1,5 +1,6 @@
 from django import forms
 from django.utils.safestring import mark_safe
+from django.core.urlresolvers import reverse
 
 class AdminScytheWidget(forms.FileInput):
     """
@@ -10,7 +11,8 @@ class AdminScytheWidget(forms.FileInput):
         css = {
             'all': ('django-scythe/django-scythe.css', 'django-scythe/jqModal.css', 'django-scythe/jquery.Jcrop.css')
         }
-        js = ('django-scythe/unclobber-jquery.js', 'django-scythe/django-scythe.js', 'django-scythe/jqModal.js', 'django-scythe/jquery.Jcrop.js')
+        # js = ('django-scythe/unclobber-jquery.js', 'django-scythe/django-scythe.js', 'django-scythe/jqModal.js', 'django-scythe/jquery.Jcrop.js', 'django-scythe/jquery.jqupload.min.js')
+        js = ('django-scythe/unclobber-jquery.js', 'django-scythe/django-scythe.js', 'django-scythe/jqModal.js', 'django-scythe/jquery.Jcrop.js', 'django-scythe/ajaxfileupload.js')
 
     def __init__(self, *args, **kwargs):
         self.dims = False
@@ -40,6 +42,7 @@ class AdminScytheWidget(forms.FileInput):
                     dims = '%s%spx tall' % (y, x.get('h'),)
         for x in ('cw', 'ch', 'cx', 'cy', 'cx2', 'cy2'):
             hidden_inputs += '<input type="hidden" name="%s" />' % (x,)
+        hidden_inputs += '<input type="hidden" name="base64_url" value="%s" />' % (reverse('scythe_get_imagedata'),)
         if value and hasattr(value, "url"):
             # we have an image - show it!
             output = """
