@@ -4,11 +4,13 @@ addEvent(window, 'load', function(){
       targs = $('.target', each),
       clrs = $('.reset', each),
       crops = $('.crop', each),
+      ajax_image_url = $('.django-scythe input[name="ajax_image_url"]').val(),
       jqm_options = {
         modal: true,
         focusInput: false,
         onShow: function(hash){
-          var offset = ($(window).scrollTop() + hash.w.height() > $(document.body).height()) ? $(document.body).height() - hash.w.height() : $(window).scrollTop();
+          var offset = ($(window).scrollTop() + hash.w.height() > $(document.body).height()) ? 10 : $(window).scrollTop();
+          $('body').css('min-height', hash.w.height()+'px');
           hash.w.show().css('top', offset+'px');
           // $('body').height() > 
           // $(this).css()
@@ -123,8 +125,7 @@ addEvent(window, 'load', function(){
 
       },
       resetWidget = function(e){
-        e.stopPropagation();
-        e.preventDefault();
+        e && e.preventDefault();
         var cont = $(this).closest('.django-scythe');
         cont.removeClass('previous-input').addClass('no-input');
         $('.target input', cont).val('');
@@ -242,31 +243,66 @@ addEvent(window, 'load', function(){
         createCropInterface(elm, data.original_image_dims.w, data.original_image_dims.h, $('<img />', {'src': img.src}));
         $(img).css({'width': data.preview_attrs.w+'px'}).appendTo($(elm).find('.mini-crop').empty());
       },
-      handleFile = function(file, elm){
-        var img = document.createElement("img"),
-            reader = new FileReader();
+      getImageData = (function(){
+        
+        return typeof(FileReader) == 'undefined' ? function(file, elm){
+          var img = document.createElement("img");
 
-        if (!file.type.match(/image.*/)) {
-          resetWidget();
-          return false;
+          $.ajaxFileUpload(
+            {
+              url: $('[name="base64_url"]', $(elm).next()).val(), 
+              secureuri: false,
+              fileElementId: $('[type="file"]', elm).attr('id'),
+              dataType: 'json',
+              success: function (data, status)
+              {
+                $(img).one('load', function(){$(elm).parent().removeClass('loading').trigger('scythe-new-image', [img]);});
+                if('imagedata' in data)
+                {
+                  img.src = data.imagedata;
+                }
+                else
+                {
+                  resetWidget();
+                }
+              },
+              error: function (data, status, e)
+              {
+                resetWidget();
+              }
+            }
+          );
+          $('#scythe-upload').remove();
+          
+        } : function(file, elm){
+          var img = document.createElement("img"),
+              reader = new FileReader();
+
+          if (!file.type.match(/image.*/)) {
+            resetWidget();
+            return false;
+          }
+
+          img.classList.add("obj");
+          img.file = file;
+
+          reader.onload = (function(aImg){
+            return function(e){
+              $(aImg).one('load', function(){$(elm).parent().removeClass('loading').trigger('scythe-new-image', [aImg]);});
+              aImg.src = e.target.result;
+            };
+          })(img);
+          reader.readAsDataURL(file);
+          
         }
         
+      })(),
+      processFile = function(file, elm){
         $(elm).removeClass('dropme')
                .parent()
                .removeClass('no-input')
                .addClass('loading');
-
-        img.classList.add("obj");
-        img.file = file;
-
-        reader.onload = (function(aImg){
-          return function(e){
-            $(aImg).one('load', function(){$(elm).parent().removeClass('loading').trigger('scythe-new-image', [aImg]);});
-            aImg.src = e.target.result;
-          };
-        })(img);
-        reader.readAsDataURL(file);
-        
+        getImageData(file, elm);        
       },
       stopEvent = function(e){
         e.stopPropagation();
@@ -277,7 +313,7 @@ addEvent(window, 'load', function(){
         e.preventDefault();
         var dt = e.originalEvent.dataTransfer,
             files = dt.files;
-        files && files.length > 0 && handleFile(files[0], this);
+        files && files.length > 0 && processFile(files[0], this);
       },
       highlightTrigger = function(e){
         e.stopPropagation();
@@ -288,37 +324,28 @@ addEvent(window, 'load', function(){
         e.originalTarget && e.originalTarget.nodeType != 3 && e.relatedTarget.nodeType != 3 && !$.contains(this, e.originalTarget) && $(this).removeClass('dropme');
       };
   
-  if(typeof(FileReader) == "undefined")
-  {
-    //We need the File API
-    each.each(function(){
-      var inputs = $(this).find('input').detach();
-      $(this).empty().append(inputs);
-    });
-    return;
-  }
-
-  
   crop_modal.jqm(jqm_options);
       
-  targs.bind({
-      'dragenter': highlightTrigger,
-      'dragover': stopEvent,
-      'drop': dropFile,
-      'dragleave': unHighlightTrigger,
+  targs
+    // .addClass('droppable')
+    .bind({
+      // 'dragenter': highlightTrigger,
+      // 'dragover': stopEvent,
+      // 'drop': dropFile,
+      // 'dragleave': unHighlightTrigger,
       'mousemove': function(e){
         var fileInput = $('input', this),
             upload = $(this);
-    	      fileInput.css({
-    		      'left': e.pageX - upload.offset().left - fileInput.outerWidth() + 20,
-    		      'top': e.pageY - upload.offset().top - 20
-    	      });	
+           fileInput.css({
+             'left': e.pageX - upload.offset().left - fileInput.outerWidth() + 20,
+             'top': e.pageY - upload.offset().top - 20
+           }); 
       }
     })
-    .children('input')
+  targs.children('input')
     .change(function(e){
       var files = e.currentTarget.files;
-      files && files.length > 0 && handleFile(files[0], $(this).closest('.target'));
+      files && files.length > 0 && processFile(files[0], $(this).closest('.target'));
     });  
   each.each(function(){
       setupDims($(this));

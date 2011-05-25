@@ -32,7 +32,7 @@
 {
   text-decoration: underline;
 }
-.django-scythe .target.dropme .drop
+.django-scythe .target.droppable.dropme .drop
 {
   display: inline;
 }
@@ -95,14 +95,16 @@
 .django-scythe.no-input .preview,
 .django-scythe.loading  .preview,
 .django-scythe .target,
-.django-scythe .target.dropme .click,
-.django-scythe .target.dropme .or,
-.django-scythe .target.dropme .drag,
+.django-scythe .target.droppable.dropme .click,
+.django-scythe .target.droppable.dropme .or,
+.django-scythe .target.droppable.dropme .drag,
 .django-scythe .target:hover .or,
 .django-scythe .target:hover .drag,
 .django-scythe .target .drop,
 .django-scythe.loading .target span,
-.django-scythe.previous-input .crop
+.django-scythe.previous-input .crop,
+.django-scythe .target .or,
+.django-scythe .target .drag
 {
   display: none;
 }
