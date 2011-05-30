@@ -15,5 +15,5 @@ def bounce_image(request):
         from StringIO import StringIO
         import Image
         newimg = Image.open(StringIO(fdata))
-        return HttpResponse(simplejson.dumps({'imagedata': 'data:%s;base64,%s' % (newimg.format, b)}))
-    return HttpResponse(simplejson.dumps({'error': 'No file'}))
+        return HttpResponse('data:%s;base64,%s' % (newimg.format, b))
+    return HttpResponse('')
