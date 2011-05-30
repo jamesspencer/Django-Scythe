@@ -10,8 +10,6 @@ addEvent(window, 'load', function()
     {
       $('#original_form').submit(function(e){
         $('input[name="_save"]', this).after($('<strong />', {'text': 'Uploading image, please wait...'})).remove();
-        e.stopPropagation();
-        e.preventDefault();
       });
     }
   })(django.jQuery)
