@@ -63,12 +63,12 @@ addEvent(window, 'load', function(){
               saveCrop = $('.jqmWindow .save_crop'),
               cancelCrop = $('.jqmWindow .cancel_crop'),
               clearCrop = $('.jqmWindow .clear_crop'),
-              id_x = $('[name="cx"]', elm),
-              id_y = $('[name="cy"]', elm),
-              id_xx = $('[name="cx2"]', elm),
-              id_yy = $('[name="cy2"]', elm),
-              id_w = $('[name="cw"]', elm),
-              id_h = $('[name="ch"]', elm),
+              id_x = $('[name$="_cx"]', elm),
+              id_y = $('[name$="_cy"]', elm),
+              id_xx = $('[name$="_cx2"]', elm),
+              id_yy = $('[name$="_cy2"]', elm),
+              id_w = $('[name$="_cw"]', elm),
+              id_h = $('[name$="_ch"]', elm),
               showPreview = function(coords)
               {
                   if(parseInt(coords.w) > 0){
@@ -139,21 +139,21 @@ addEvent(window, 'load', function(){
         cont.children('.preview').find('img').remove();
       },
       setCropValues = function(elm, x,y,xx,yy,w,h){
-        (x !== false) && $('[name="cx"]', elm).val(parseInt(x, 10));
-        (y !== false) && $('[name="cy"]', elm).val(parseInt(y, 10));
-        (xx !== false) && $('[name="cx2"]', elm).val(parseInt(xx, 10));
-        (yy !== false) && $('[name="cy2"]', elm).val(parseInt(yy, 10));
-        (w !== false) && $('[name="cw"]', elm).val(parseInt(w, 10));
-        (h !== false) && $('[name="ch"]', elm).val(parseInt(h, 10));
+        (x !== false) && $('[name$="_cx"]', elm).val(parseInt(x, 10));
+        (y !== false) && $('[name$="_cy"]', elm).val(parseInt(y, 10));
+        (xx !== false) && $('[name$="_cx2"]', elm).val(parseInt(xx, 10));
+        (yy !== false) && $('[name$="_cy2"]', elm).val(parseInt(yy, 10));
+        (w !== false) && $('[name$="_cw"]', elm).val(parseInt(w, 10));
+        (h !== false) && $('[name$="_ch"]', elm).val(parseInt(h, 10));
       },
       getCropValues = function(elm){
         return {
-          'x': parseInt($('[name="cx"]', elm).val(), 0),
-          'y': parseInt($('[name="cy"]', elm).val(), 0),
-          'xx': parseInt($('[name="cx2"]', elm).val(), 0),
-          'yy': parseInt($('[name="cy2"]', elm).val(), 0),
-          'w': parseInt($('[name="cw"]', elm).val(), 0),
-          'h': parseInt($('[name="ch"]', elm).val(), 0)
+          'x': parseInt($('[name$="_cx"]', elm).val(), 0),
+          'y': parseInt($('[name$="_cy"]', elm).val(), 0),
+          'xx': parseInt($('[name$="_cx2"]', elm).val(), 0),
+          'yy': parseInt($('[name$="_cy2"]', elm).val(), 0),
+          'w': parseInt($('[name$="_cw"]', elm).val(), 0),
+          'h': parseInt($('[name$="_ch"]', elm).val(), 0)
         };
       },
       fetchDims = function(cont){

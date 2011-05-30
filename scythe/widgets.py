@@ -43,7 +43,7 @@ class AdminScytheWidget(forms.FileInput):
                 elif not dims and x.get('h', False):
                     dims = '%s%spx tall' % (y, x.get('h'),)
         for x in ('cw', 'ch', 'cx', 'cy', 'cx2', 'cy2'):
-            hidden_inputs += '<input type="hidden" name="%s" />' % (x,)
+            hidden_inputs += '<input type="hidden" name="%s_%s" />' % (name, x)
         hidden_inputs += '<input type="hidden" name="scythe_original_src_url" value="%s" />' % (reverse('scythe_original_src'),)
         hidden_inputs += '<input type="hidden" name="scythe_original_id" value="" />'
         if value and hasattr(value, "url"):
@@ -86,7 +86,7 @@ class AdminScytheWidget(forms.FileInput):
         import ImageFile
         ImageFile.MAXBLOCK = 1024 * 1024 # default is 64k - avoids 'Suspension not allowed here' error
         postedimg = files.get(name, None)
-        originalimg_id = data.get('scythe_original_id', False)
+        originalimg_id = False
         if postedimg:
             tmp_file = StringIO()
             if hasattr(postedimg, 'temporary_file_path'):
@@ -95,7 +95,7 @@ class AdminScytheWidget(forms.FileInput):
             else:
                 field_name = postedimg.field_name
                 newimg = Image.open(StringIO(postedimg.read()))
-            newimg = newimg.crop([int(data.get('cx', 0)),int(data.get('cy', 0)),int(data.get('cx2', 0)),int(data.get('cy2', 0))]).resize([self.dims.get('w', 100),self.dims.get('h', 100)],Image.ANTIALIAS)
+            newimg = newimg.crop([int(data.get(name+'_cx', 0)),int(data.get(name+'_cy', 0)),int(data.get(name+'_cx2', 0)),int(data.get(name+'_cy2', 0))]).resize([self.dims.get('w', 100),self.dims.get('h', 100)],Image.ANTIALIAS)
             postedimg.seek(0)
             newimg_io = StringIO()
             newimg.save(newimg_io, format='JPEG', quality=90)
@@ -104,7 +104,7 @@ class AdminScytheWidget(forms.FileInput):
         elif originalimg_id:
             origimg = Original.objects.get(id=originalimg_id).image
             newimg = Image.open(origimg)
-            newimg = newimg.crop([int(data.get('cx', 0)),int(data.get('cy', 0)),int(data.get('cx2', 0)),int(data.get('cy2', 0))]).resize([self.dims.get('w', 100),self.dims.get('h', 100)],Image.ANTIALIAS)
+            newimg = newimg.crop([int(data.get(name+'_cx', 0)),int(data.get(name+'_cy', 0)),int(data.get(name+'_cx2', 0)),int(data.get(name+'_cy2', 0))]).resize([self.dims.get('w', 100),self.dims.get('h', 100)],Image.ANTIALIAS)
             newimg_io = StringIO()
             newimg.save(newimg_io, format='JPEG', quality=90)
             newimg_io.seek(0)
