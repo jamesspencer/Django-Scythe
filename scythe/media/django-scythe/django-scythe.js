@@ -20,7 +20,7 @@ addEvent(window, 'load', function(){
         }
       },
       attachImgLoad = function(img, elm){
-        $(img).one('load', function(){console.log($(elm).parent());$(elm).parent().removeClass('loading').trigger('scythe-new-image', [img]);});
+        $(img).one('load', function(){$(elm).parent().removeClass('loading').trigger('scythe-new-image', [img]);});
       },
       crop_modal = $('<div />', {'class': 'jqmWindow', css: {'display': 'none'}}).appendTo($('body')),
       createCropInterface = function(elm, orig_w, orig_h, orig_image){
