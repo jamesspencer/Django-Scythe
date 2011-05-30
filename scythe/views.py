@@ -1,19 +1,10 @@
-from django.contrib.admin.views.decorators import staff_member_required
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import simplejson
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 
-import base64
+from scythe.models import Original
 
-@staff_member_required
-@csrf_exempt
-def bounce_image(request):
-    postedimg = request.FILES.get('image', False)
-    if postedimg:
-        fdata = postedimg.read(postedimg.size)
-        b = base64.b64encode(fdata)
-        from StringIO import StringIO
-        import Image
-        newimg = Image.open(StringIO(fdata))
-        return HttpResponse('data:%s;base64,%s' % (newimg.format, b))
+def original_src(request):
+    if 'id' in request.GET.keys():
+        orig = get_object_or_404(Original, id=request.GET['id'])
+        return HttpResponse(orig.image.url)
     return HttpResponse('')

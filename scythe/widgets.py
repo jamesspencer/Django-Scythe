@@ -2,6 +2,8 @@ from django import forms
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
 
+from scythe.models import Original
+
 class AdminScytheWidget(forms.FileInput):
     """
     A ImageField Widget for admin that allows users to crop
@@ -42,7 +44,8 @@ class AdminScytheWidget(forms.FileInput):
                     dims = '%s%spx tall' % (y, x.get('h'),)
         for x in ('cw', 'ch', 'cx', 'cy', 'cx2', 'cy2'):
             hidden_inputs += '<input type="hidden" name="%s" />' % (x,)
-        hidden_inputs += '<input type="hidden" name="base64_url" value="%s" />' % (reverse('scythe_get_imagedata'),)
+        hidden_inputs += '<input type="hidden" name="scythe_original_src_url" value="%s" />' % (reverse('scythe_original_src'),)
+        hidden_inputs += '<input type="hidden" name="scythe_original_id" value="" />'
         if value and hasattr(value, "url"):
             # we have an image - show it!
             output = """
@@ -55,8 +58,9 @@ class AdminScytheWidget(forms.FileInput):
                   <div class="mini-crop"><a target="_blank" class="current" href="%s"><img src="%s" /></a></div>
                   <div class="django-scythe-actions"><a href="#" class="crop">crop</a> <a href="#" class="reset">clear</a> %s</div>
               </div>
+              <a onclick="return showAddAnotherPopup(this);" id="scythe_%s" href="%s" class="add_scythe_original">Add original</a>
             </div>
-            """ % (dims, super(AdminScytheWidget, self).render(name, value, attrs), value.url, value.url, hidden_inputs)
+            """ % (dims, super(AdminScytheWidget, self).render(name, value, attrs), value.url, value.url, hidden_inputs, name, reverse('admin:scythe_original_add'))
         else:
             output = """
             <div class="django-scythe no-input">
@@ -68,20 +72,22 @@ class AdminScytheWidget(forms.FileInput):
                   <div class="mini-crop"></div>
                   <div class="django-scythe-actions"><span><a href="#" class="crop">crop</a></span><span><a href="#" class="reset">clear</a></span>%s</div>
               </div>
+              <a onclick="return showAddAnotherPopup(this);" id="scythe_%s" href="%s" class="add_scythe_original">Add original</a>
             </div>
-            """ % (dims, super(AdminScytheWidget, self).render(name, value, attrs), hidden_inputs)
+            """ % (dims, super(AdminScytheWidget, self).render(name, value, attrs), hidden_inputs, name, reverse('admin:scythe_original_add'))
         return mark_safe(output)
 
     def value_from_datadict(self, data, files, name):
         "File widgets take data from FILES, not POST"
+        from StringIO import StringIO
+        from django.core.files.uploadedfile import InMemoryUploadedFile
+        import Image
+        import os
+        import ImageFile
+        ImageFile.MAXBLOCK = 1024 * 1024 # default is 64k - avoids 'Suspension not allowed here' error
         postedimg = files.get(name, None)
+        originalimg_id = data.get('scythe_original_id', False)
         if postedimg:
-            from StringIO import StringIO
-            from django.core.files.uploadedfile import InMemoryUploadedFile
-            import Image
-            import os
-            import ImageFile
-            ImageFile.MAXBLOCK = 1024 * 1024 # default is 64k - avoids 'Suspension not allowed here' error
             tmp_file = StringIO()
             if hasattr(postedimg, 'temporary_file_path'):
                 field_name = None
@@ -95,5 +101,13 @@ class AdminScytheWidget(forms.FileInput):
             newimg.save(newimg_io, format='JPEG', quality=90)
             newimg_io.seek(0)
             postedimg = InMemoryUploadedFile(newimg_io, field_name, postedimg.name, 'image/jpeg', newimg_io.len, None)
+        elif originalimg_id:
+            origimg = Original.objects.get(id=originalimg_id).image
+            newimg = Image.open(origimg)
+            newimg = newimg.crop([int(data.get('cx', 0)),int(data.get('cy', 0)),int(data.get('cx2', 0)),int(data.get('cy2', 0))]).resize([self.dims.get('w', 100),self.dims.get('h', 100)],Image.ANTIALIAS)
+            newimg_io = StringIO()
+            newimg.save(newimg_io, format='JPEG', quality=90)
+            newimg_io.seek(0)
+            postedimg = InMemoryUploadedFile(newimg_io, None, origimg.name, 'image/jpeg', newimg_io.len, None)
         return postedimg
 

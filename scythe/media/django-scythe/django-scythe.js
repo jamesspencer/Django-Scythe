@@ -1,10 +1,13 @@
+var originalDismissAddAnotherPopup;
+
 addEvent(window, 'load', function(){
+
   var $ = django.jQuery,
       each = $('.django-scythe'),
       targs = $('.target', each),
       clrs = $('.reset', each),
       crops = $('.crop', each),
-      ajax_image_url = $('.django-scythe input[name="ajax_image_url"]').val(),
+      original_src_url = $('.django-scythe input[name="scythe_original_src_url"]').val(),
       jqm_options = {
         modal: true,
         focusInput: false,
@@ -15,6 +18,9 @@ addEvent(window, 'load', function(){
           // $('body').height() > 
           // $(this).css()
         }
+      },
+      attachImgLoad = function(img, elm){
+        $(img).one('load', function(){console.log($(elm).parent());$(elm).parent().removeClass('loading').trigger('scythe-new-image', [img]);});
       },
       crop_modal = $('<div />', {'class': 'jqmWindow', css: {'display': 'none'}}).appendTo($('body')),
       createCropInterface = function(elm, orig_w, orig_h, orig_image){
@@ -129,15 +135,16 @@ addEvent(window, 'load', function(){
         var cont = $(this).closest('.django-scythe');
         cont.removeClass('previous-input').addClass('no-input');
         $('.target input', cont).val('');
+        $('[name="scythe_original_id"]', cont).val('');
         cont.children('.preview').find('img').remove();
       },
       setCropValues = function(elm, x,y,xx,yy,w,h){
-        (x !== false) && $('[name="cx"]', elm).val(x);
-        (y !== false) && $('[name="cy"]', elm).val(y);
-        (xx !== false) && $('[name="cx2"]', elm).val(xx);
-        (yy !== false) && $('[name="cy2"]', elm).val(yy);
-        (w !== false) && $('[name="cw"]', elm).val(w);
-        (h !== false) && $('[name="ch"]', elm).val(h);
+        (x !== false) && $('[name="cx"]', elm).val(parseInt(x, 10));
+        (y !== false) && $('[name="cy"]', elm).val(parseInt(y, 10));
+        (xx !== false) && $('[name="cx2"]', elm).val(parseInt(xx, 10));
+        (yy !== false) && $('[name="cy2"]', elm).val(parseInt(yy, 10));
+        (w !== false) && $('[name="cw"]', elm).val(parseInt(w, 10));
+        (h !== false) && $('[name="ch"]', elm).val(parseInt(h, 10));
       },
       getCropValues = function(elm){
         return {
@@ -243,60 +250,27 @@ addEvent(window, 'load', function(){
         createCropInterface(elm, data.original_image_dims.w, data.original_image_dims.h, $('<img />', {'src': img.src}));
         $(img).css({'width': data.preview_attrs.w+'px'}).appendTo($(elm).find('.mini-crop').empty());
       },
-      getImageData = (function(){
-        
-        return typeof(FileReader) == 'undefined' ? function(file, elm){
-          var img = document.createElement("img");
+      getImageData = function(file, elm){
+        var img = document.createElement("img"),
+            reader = new FileReader();
 
-          $.ajaxFileUpload(
-            {
-              url: $('[name="base64_url"]', $(elm).next()).val(), 
-              secureuri: false,
-              fileElementId: $('[type="file"]', elm).attr('id'),
-              dataType: 'json',
-              success: function (data, status)
-              {
-                $(img).one('load', function(){$(elm).parent().removeClass('loading').trigger('scythe-new-image', [img]);});
-                if('imagedata' in data)
-                {
-                  img.src = data.imagedata;
-                }
-                else
-                {
-                  resetWidget();
-                }
-              },
-              error: function (data, status, e)
-              {
-                resetWidget();
-              }
-            }
-          );
-          $('#scythe-upload').remove();
-          
-        } : function(file, elm){
-          var img = document.createElement("img"),
-              reader = new FileReader();
-
-          if (!file.type.match(/image.*/)) {
-            resetWidget();
-            return false;
-          }
-
-          img.classList.add("obj");
-          img.file = file;
-
-          reader.onload = (function(aImg){
-            return function(e){
-              $(aImg).one('load', function(){$(elm).parent().removeClass('loading').trigger('scythe-new-image', [aImg]);});
-              aImg.src = e.target.result;
-            };
-          })(img);
-          reader.readAsDataURL(file);
-          
+        if (!file.type.match(/image.*/)) {
+          resetWidget();
+          return false;
         }
+
+        img.classList.add("obj");
+        img.file = file;
+
+        reader.onload = (function(aImg){
+          return function(e){
+            attachImgLoad(aImg, elm);
+            aImg.src = e.target.result;
+          };
+        })(img);
+        reader.readAsDataURL(file);
         
-      })(),
+      },
       processFile = function(file, elm){
         $(elm).removeClass('dropme')
                .parent()
@@ -324,6 +298,36 @@ addEvent(window, 'load', function(){
         e.originalTarget && e.originalTarget.nodeType != 3 && e.relatedTarget.nodeType != 3 && !$.contains(this, e.originalTarget) && $(this).removeClass('dropme');
       };
   
+  
+  //clobber this function so we can grab the saved original image
+  originalDismissAddAnotherPopup = window.dismissAddAnotherPopup;
+  window.dismissAddAnotherPopup = function(win, newId, newRepr){
+    if(newRepr === 'Original object')
+    {
+      var img = document.createElement("img");
+      $.get(original_src_url+'?id='+newId, function(data){
+        var name = windowname_to_id(win.name);
+        var elem = $(document.getElementById(name));
+        if(data != '' && elem.length > 0)
+        {
+          elem.closest('.django-scythe').find('[name="scythe_original_id"]').val(newId);
+          attachImgLoad(img, elem);
+          img.src = data;
+        }
+        else
+        {
+          resetWidget();
+        }
+        win.close();
+      });
+    }
+    else
+    {
+      originalDismissAddAnotherPopup(win, newId, newRepr);
+    }
+  };
+
+  
   crop_modal.jqm(jqm_options);
       
   targs
@@ -342,11 +346,28 @@ addEvent(window, 'load', function(){
            }); 
       }
     })
-  targs.children('input')
-    .change(function(e){
-      var files = e.currentTarget.files;
-      files && files.length > 0 && processFile(files[0], $(this).closest('.target'));
-    });  
+    
+  if(typeof(FileReader) == 'undefined')
+  {
+    targs.children('input')
+      .click(function(e){
+        e.preventDefault();
+        $(this)
+              .closest('.django-scythe')
+              .removeClass('no-input')
+              .addClass('loading')
+              .find('.add_scythe_original')
+              .click();
+      });  
+  }
+  else
+  {
+    targs.children('input')
+      .change(function(e){
+        var files = e.currentTarget.files;
+        files && files.length > 0 && processFile(files[0], $(this).closest('.target'));
+      });  
+  }
   each.each(function(){
       setupDims($(this));
     })
@@ -359,4 +380,5 @@ addEvent(window, 'load', function(){
   crops.click(showModal);
 
 });
+
 

@@ -119,3 +119,8 @@
 {
   background: url("spinner.gif") scroll center center no-repeat;
 }
+
+.django-scythe .add_scythe_original
+{
+  display: none;
+}
