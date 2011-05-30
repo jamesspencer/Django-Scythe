@@ -246,7 +246,7 @@ addEvent(window, 'load', function(){
       addNewImage = function(img, elm){
         var data = $(elm).data('django-scythe');
         data.original_image_dims = {'w': img.width, 'h': img.height};
-        setCropValues(elm, 0, 0, img.width, img.width*data.aspect, img.width, img.width*data.aspect);
+        setCropValues(elm, 0, 0, img.width, img.width/data.aspect, img.width, img.width*data.aspect);
         createCropInterface(elm, data.original_image_dims.w, data.original_image_dims.h, $('<img />', {'src': img.src}));
         $(img).css({'width': data.preview_attrs.w+'px'}).appendTo($(elm).find('.mini-crop').empty());
       },
