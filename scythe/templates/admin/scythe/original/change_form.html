@@ -1,0 +1,21 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block after_field_sets %}{{ block.super }}
+<script type="text/javascript">
+addEvent(window, 'load', function()
+{
+  (function($){
+    if(window.name == 'scythe_image')
+    {
+      $('#original_form').submit(function(e){
+        $('input[name="_save"]', this).after($('<strong />', {'text': 'Uploading image, please wait...'})).remove();
+        e.stopPropagation();
+        e.preventDefault();
+      });
+    }
+  })(django.jQuery)
+});
+</script>
+
+{% endblock %}
