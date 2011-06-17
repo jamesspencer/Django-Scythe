@@ -1,13 +1,17 @@
 from django import forms
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
+from django.utils.html import escape, conditional_escape
 
 from scythe.models import Original
 
-class AdminScytheWidget(forms.FileInput):
+class AdminScytheWidget(forms.ClearableFileInput):
     """
     A ImageField Widget for admin that allows users to crop
     """
+    
+    template_with_initial = u'%(input)s'
+    template_with_clear = u'%(clear)s %(clear_checkbox_label)s'
 
     class Media:
         css = {
@@ -31,6 +35,22 @@ class AdminScytheWidget(forms.FileInput):
         super(AdminScytheWidget, self).__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None):
+
+        # stuff taken from ClearableFileInput
+        substitutions = {
+            'initial_text': self.initial_text,
+            'input_text': self.input_text,
+            'clear_template': '',
+            'clear_checkbox_label': self.clear_checkbox_label,
+        }
+
+        checkbox_name = self.clear_checkbox_name(name)
+        checkbox_id = self.clear_checkbox_id(checkbox_name)
+        substitutions['clear_checkbox_name'] = conditional_escape(checkbox_name)
+        substitutions['clear_checkbox_id'] = conditional_escape(checkbox_id)
+        substitutions['clear'] = forms.CheckboxInput().render(checkbox_name, False, attrs={'id': checkbox_id})
+        substitutions['clear_template'] = self.template_with_clear % substitutions
+
         hidden_inputs = ''
         dims = False
         for x, y, z in ((self.dims, '', ''), (self.max_dims, 'At most ', 'max_'), (self.min_dims, 'At least ', 'min_')):
@@ -44,6 +64,7 @@ class AdminScytheWidget(forms.FileInput):
                     dims = '%s%spx tall' % (y, x.get('h'),)
         for x in ('cw', 'ch', 'cx', 'cy', 'cx2', 'cy2'):
             hidden_inputs += '<input type="hidden" name="%s_%s" />' % (name, x)
+        hidden_inputs += substitutions['clear_template']
         hidden_inputs += '<input type="hidden" name="scythe_original_src_url" value="%s" />' % (reverse('scythe_original_src'),)
         hidden_inputs += '<input type="hidden" name="scythe_original_id" value="" />'
         if value and hasattr(value, "url"):
@@ -56,7 +77,7 @@ class AdminScytheWidget(forms.FileInput):
               </div>
               <div class="preview">
                   <div class="mini-crop"><a target="_blank" class="current" href="%s"><img src="%s" /></a></div>
-                  <div class="django-scythe-actions"><a href="#" class="crop">crop</a> <a href="#" class="reset">clear</a> %s</div>
+                  <div class="django-scythe-actions"><a href="#" class="crop">crop</a> <a href="#" class="reset">change</a> %s</div>
               </div>
               <a onclick="return showAddAnotherPopup(this);" id="scythe_%s" href="%s" class="add_scythe_original">Add original</a>
             </div>
@@ -70,7 +91,7 @@ class AdminScytheWidget(forms.FileInput):
               </div>
               <div class="preview">
                   <div class="mini-crop"></div>
-                  <div class="django-scythe-actions"><span><a href="#" class="crop">crop</a></span><span><a href="#" class="reset">clear</a></span>%s</div>
+                  <div class="django-scythe-actions"><span><a href="#" class="crop">crop</a></span><span><a href="#" class="reset">change</a></span>%s</div>
               </div>
               <a onclick="return showAddAnotherPopup(this);" id="scythe_%s" href="%s" class="add_scythe_original">Add original</a>
             </div>
@@ -79,6 +100,9 @@ class AdminScytheWidget(forms.FileInput):
 
     def value_from_datadict(self, data, files, name):
         "File widgets take data from FILES, not POST"
+        if not self.is_required and forms.CheckboxInput().value_from_datadict(
+            data, files, self.clear_checkbox_name(name)):
+            return False
         from StringIO import StringIO
         from django.core.files.uploadedfile import InMemoryUploadedFile
         import Image
