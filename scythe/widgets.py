@@ -43,13 +43,14 @@ class AdminScytheWidget(forms.ClearableFileInput):
             'clear_template': '',
             'clear_checkbox_label': self.clear_checkbox_label,
         }
-
-        checkbox_name = self.clear_checkbox_name(name)
-        checkbox_id = self.clear_checkbox_id(checkbox_name)
-        substitutions['clear_checkbox_name'] = conditional_escape(checkbox_name)
-        substitutions['clear_checkbox_id'] = conditional_escape(checkbox_id)
-        substitutions['clear'] = forms.CheckboxInput().render(checkbox_name, False, attrs={'id': checkbox_id})
-        substitutions['clear_template'] = self.template_with_clear % substitutions
+        
+        if not self.is_required:
+            checkbox_name = self.clear_checkbox_name(name)
+            checkbox_id = self.clear_checkbox_id(checkbox_name)
+            substitutions['clear_checkbox_name'] = conditional_escape(checkbox_name)
+            substitutions['clear_checkbox_id'] = conditional_escape(checkbox_id)
+            substitutions['clear'] = forms.CheckboxInput().render(checkbox_name, False, attrs={'id': checkbox_id})
+            substitutions['clear_template'] = self.template_with_clear % substitutions
 
         hidden_inputs = ''
         dims = False
